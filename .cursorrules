@@ -1,0 +1,49 @@
+# MaruBot Discord - Règles Cursor
+
+## Architecture
+
+- Utiliser TypeScript strict
+- Structure modulaire obligatoire
+- Chaque module doit être indépendant
+- Patterns: Repository, Service, Controller
+
+## Conventions de code
+
+- ESLint + Prettier
+- Nommage: camelCase pour variables, PascalCase pour classes
+- Commentaires JSDoc pour fonctions publiques
+- Imports organisés (lib, local, types)
+
+## Base de données
+
+- Prisma pour ORM
+- Migrations versionnées
+- Toujours typer les retours DB
+
+## Git
+
+- Commits conventionnels (feat:, fix:, docs:, etc.)
+- Branches: feature/*, fix/*, hotfix/*
+- PR obligatoires avec review
+
+## Tests
+
+- Jest pour tests unitaires
+- Supertest pour tests API
+- Coverage minimum 80%
+
+## Discord.js
+
+- Utiliser Discord.js v14+
+- Slash commands uniquement
+- Boutons interactifs pour UX améliorée
+- Embeds standardisés avec footer
+
+## Langue
+
+- Code en anglais
+- Messages utilisateur en français
+- Documentation en français
+
+
+

@@ -1,0 +1,33 @@
+{
+  "required": [
+    "VIEW_CHANNEL",
+    "SEND_MESSAGES",
+    "EMBED_LINKS",
+    "ATTACH_FILES",
+    "READ_MESSAGE_HISTORY",
+    "USE_EXTERNAL_EMOJIS",
+    "ADD_REACTIONS",
+    "CONNECT",
+    "SPEAK",
+    "USE_VAD"
+  ],
+  "moderation": [
+    "MANAGE_MESSAGES",
+    "MANAGE_ROLES",
+    "KICK_MEMBERS",
+    "BAN_MEMBERS",
+    "MODERATE_MEMBERS",
+    "MANAGE_CHANNELS"
+  ],
+  "music": [
+    "MANAGE_MESSAGES",
+    "PRIORITY_SPEAKER"
+  ],
+  "administration": [
+    "MANAGE_GUILD",
+    "ADMINISTRATOR"
+  ]
+}
+
+
+

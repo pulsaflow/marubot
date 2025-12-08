@@ -1,0 +1,45 @@
+{
+  "bot": {
+    "prefix": "!",
+    "owners": [],
+    "status": {
+      "type": "WATCHING",
+      "text": "{servers} serveurs | /help"
+    },
+    "presence": "online"
+  },
+  "modules": {
+    "moderation": true,
+    "levels": true,
+    "economy": true,
+    "music": true,
+    "tickets": true,
+    "fun": true,
+    "automod": true,
+    "giveaways": true,
+    "stats": true,
+    "reactionroles": true,
+    "tempvoice": true,
+    "starboard": true,
+    "polls": true,
+    "automessages": true,
+    "interserver": false,
+    "advent": false
+  },
+  "defaults": {
+    "language": "fr",
+    "timezone": "Europe/Paris",
+    "currency": "💰",
+    "color": "#5865F2"
+  },
+  "limits": {
+    "maxWarnings": 3,
+    "maxQueueSize": 100,
+    "maxTicketsPerUser": 3,
+    "cooldownSeconds": 3,
+    "maxMessageLength": 2000
+  }
+}
+
+
+
