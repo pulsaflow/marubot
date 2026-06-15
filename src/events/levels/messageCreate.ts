@@ -1,6 +1,7 @@
 import { Message } from 'discord.js';
 import { prisma } from '@/database/client';
 import { logger } from '@/services/LoggerService';
+import { ensureGuildExists } from '@/utils/guild';
 
 /**
  * Calcule le niveau à partir de l'XP
@@ -16,6 +17,9 @@ export async function handleMessageXP(message: Message): Promise<void> {
   if (!message.guild || message.author.bot) return;
 
   try {
+    // S'assurer que le Guild existe dans la base de données
+    await ensureGuildExists(message.guild);
+
     // Récupérer ou créer la configuration
     let levelConfig = await prisma.levelConfig.findUnique({
       where: { guildId: message.guild.id },
@@ -136,5 +140,11 @@ export async function handleMessageXP(message: Message): Promise<void> {
     logger.error('Erreur lors de l\'attribution d\'XP:', error);
   }
 }
+
+
+
+
+
+
 
 

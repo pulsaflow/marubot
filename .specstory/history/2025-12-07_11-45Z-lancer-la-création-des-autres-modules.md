@@ -9307,7 +9307,6 @@ _**Agent (model default, mode Agent)**_
 
 ---
 
-
 Le problème vient du script shell de `tsx` incompatible avec Windows. Vérifiant `package.json` pour corriger cela :
 
 
@@ -9346,7 +9345,6 @@ Status: **completed**
 
 
 ---
-
 
 Correction du script pour Windows : utiliser `tsx` via `npx` ou le chemin Windows.
 
@@ -9389,7 +9387,6 @@ Status: **completed**
 
 
 ---
-
 
 Utilisation de `npx` pour une meilleure compatibilité :
 
@@ -9503,7 +9500,6 @@ Status: **completed**
 
 ---
 
-
 Utilisation de `npx tsx` pour une meilleure compatibilité :
 
 
@@ -9577,7 +9573,6 @@ Status: **completed**
 
 
 ---
-
 
 Utilisation de `npx tsx` pour une meilleure compatibilité :
 
@@ -9692,7 +9687,6 @@ Status: **completed**
 
 ---
 
-
 Vérifiant si le fichier existe et testant une autre approche :
 
 
@@ -9777,7 +9771,6 @@ Status: **completed**
 
 ---
 
-
 Utilisation de `npx` pour une meilleure compatibilité :
 
 
@@ -9852,7 +9845,6 @@ Status: **completed**
 
 ---
 
-
 Utilisation de `npx tsx` pour une meilleure compatibilité :
 
 
@@ -9909,7 +9901,6 @@ Directory: **undefined** (1 file)
 
 
 ---
-
 
 Le fichier existe. Utilisation de `npx tsx` pour une meilleure compatibilité :
 
@@ -10024,7 +10015,6 @@ Status: **completed**
 
 ---
 
-
 `cross-env` n'est pas installé. Utilisation d'une solution plus simple :
 
 
@@ -10137,7 +10127,6 @@ Status: **completed**
 
 ---
 
-
 J'ai corrigé le script `dev` dans `package.json`. Le problème venait de l'utilisation directe du script shell Unix de `tsx`, qui ne fonctionne pas sur Windows.
 
 **Solution appliquée :**
@@ -10165,6 +10154,58 @@ Puis modifier le script :
 ```
 
 Le bot devrait maintenant démarrer correctement. Si vous rencontrez encore des problèmes, dites-le moi.
+
+---
+
+_**User (2025-12-08 15:47Z)**_
+
+2025-12-08 22:25:38 [error]: Erreur Prisma: {
+
+  "service": "MaruBot",
+
+  "error": {
+
+    "message": "\nInvalid `prisma.levelConfig.create()` invocation in\nC:\\Users\\lerev\\MesProjets\\MaruBot\\src\\events\\levels\\messageCreate.ts:25:46\n\n  22 });\n  23 \n  24 if (!levelConfig) {\n→ 25   levelConfig = await prisma.levelConfig.create(\nForeign key constraint violated: `LevelConfig_guildId_fkey (index)`"
+
+  }
+
+}
+
+2025-12-08 22:25:38 [error]: Erreur lors de l'attribution d'XP: {
+
+  "service": "MaruBot",
+
+  "error": "\nInvalid `prisma.levelConfig.create()` invocation in\nC:\\Users\\lerev\\MesProjets\\MaruBot\\src\\events\\levels\\messageCreate.ts:25:46\n\n  22 });\n  23 \n  24 if (!levelConfig) {\n→ 25   levelConfig = await prisma.levelConfig.create(\nForeign key constraint violated: `LevelConfig_guildId_fkey (index)`",
+
+  "stack": "PrismaClientKnownRequestError: \nInvalid `prisma.levelConfig.create()` invocation in\nC:\\Users\\lerev\\MesProjets\\MaruBot\\src\\events\\levels\\messageCreate.ts:25:46\n\n  22 });\n  23 \n  24 if (!levelConfig) {\n→ 25   levelConfig = await prisma.levelConfig.create(\nForeign key constraint violated: `LevelConfig_guildId_fkey (index)`\n    at $n.handleRequestError (C:\\Users\\lerev\\MesProjets\\MaruBot\\node_modules\\@prisma\\client\\runtime\\library.js:121:7315)\n    at $n.handleAndLogRequestError (C:\\Users\\lerev\\MesProjets\\MaruBot\\node_modules\\@prisma\\client\\runtime\\library.js:121:6623)\n    at $n.request (C:\\Users\\lerev\\MesProjets\\MaruBot\\node_modules\\@prisma\\client\\runtime\\library.js:121:6307)\n    at async l (C:\\Users\\lerev\\MesProjets\\MaruBot\\node_modules\\@prisma\\client\\runtime\\library.js:130:9633)\n    at async handleMessageXP (C:\\Users\\lerev\\MesProjets\\MaruBot\\src\\events\\levels\\messageCreate.ts:25:21)\n    at async Object.execute (C:\\Users\\lerev\\MesProjets\\MaruBot\\src\\events\\messageCreate.ts:12:5)\n    at async Client.<anonymous> (C:\\Users\\lerev\\MesProjets\\MaruBot\\src\\core\\EventHandler.ts:63:15)"
+
+}
+
+2025-12-08 22:26:11 [error]: Erreur Prisma: {
+
+  "service": "MaruBot",
+
+  "error": {
+
+    "message": "\nInvalid `prisma.levelConfig.create()` invocation in\nC:\\Users\\lerev\\MesProjets\\MaruBot\\src\\events\\levels\\messageCreate.ts:25:46\n\n  22 });\n  23 \n  24 if (!levelConfig) {\n→ 25   levelConfig = await prisma.levelConfig.create(\nForeign key constraint violated: `LevelConfig_guildId_fkey (index)`"
+
+  }
+
+}
+
+2025-12-08 22:26:11 [error]: Erreur lors de l'attribution d'XP: {
+
+  "service": "MaruBot",
+
+  "error": "\nInvalid `prisma.levelConfig.create()` invocation in\nC:\\Users\\lerev\\MesProjets\\MaruBot\\src\\events\\levels\\messageCreate.ts:25:46\n\n  22 });\n  23 \n  24 if (!levelConfig) {\n→ 25   levelConfig = await prisma.levelConfig.create(\nForeign key constraint violated: `LevelConfig_guildId_fkey (index)`",
+
+  "stack": "PrismaClientKnownRequestError: \nInvalid `prisma.levelConfig.create()` invocation in\nC:\\Users\\lerev\\MesProjets\\MaruBot\\src\\events\\levels\\messageCreate.ts:25:46\n\n  22 });\n  23 \n  24 if (!levelConfig) {\n→ 25   levelConfig = await prisma.levelConfig.create(\nForeign key constraint violated: `LevelConfig_guildId_fkey (index)`\n    at $n.handleRequestError (C:\\Users\\lerev\\MesProjets\\MaruBot\\node_modules\\@prisma\\client\\runtime\\library.js:121:7315)\n    at $n.handleAndLogRequestError (C:\\Users\\lerev\\MesProjets\\MaruBot\\node_modules\\@prisma\\client\\runtime\\library.js:121:6623)\n    at $n.request (C:\\Users\\lerev\\MesProjets\\MaruBot\\node_modules\\@prisma\\client\\runtime\\library.js:121:6307)\n    at async l (C:\\Users\\lerev\\MesProjets\\MaruBot\\node_modules\\@prisma\\client\\runtime\\library.js:130:9633)\n    at async handleMessageXP (C:\\Users\\lerev\\MesProjets\\MaruBot\\src\\events\\levels\\messageCreate.ts:25:21)\n    at async Object.execute (C:\\Users\\lerev\\MesProjets\\MaruBot\\src\\events\\messageCreate.ts:12:5)\n    at async Client.<anonymous> (C:\\Users\\lerev\\MesProjets\\MaruBot\\src\\core\\EventHandler.ts:63:15)"
+
+---
+
+_**Agent (model default, mode Agent)**_
+
+
 
 ---
 

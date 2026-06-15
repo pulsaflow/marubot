@@ -3,6 +3,7 @@ import { Command } from '@/types';
 import { createSuccessEmbed, createErrorEmbed } from '@/utils/embeds';
 import { prisma } from '@/database/client';
 import { logger } from '@/services/LoggerService';
+import { ensureGuildExists } from '@/utils/guild';
 
 const jobs = [
   { name: 'Développeur', min: 50, max: 200 },
@@ -41,6 +42,9 @@ export default {
     }
 
     try {
+      // S'assurer que le Guild existe
+      await ensureGuildExists(interaction.guild);
+
       // Récupérer ou créer la configuration
       let economyConfig = await prisma.economyConfig.findUnique({
         where: { guildId: interaction.guild.id },
@@ -144,5 +148,11 @@ export default {
     }
   },
 } as Command;
+
+
+
+
+
+
 
 

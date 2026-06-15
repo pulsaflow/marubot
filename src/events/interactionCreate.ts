@@ -8,7 +8,6 @@ import {
 import { logger } from '../services/LoggerService';
 import { createErrorEmbed } from '../utils/embeds';
 import type { Bot } from '../core/Bot';
-import { QueueRepeatMode } from 'discord-player';
 
 export default {
   name: Events.InteractionCreate,

@@ -30,16 +30,7 @@ export class LoggerService {
               if (value === null || value === undefined) {
                 cleanMeta[key] = value;
               } else if (typeof value === 'object') {
-                // Détecter les objets Player/Queue/discord-player
-                const constructorName = (value as { constructor?: { name?: string } }).constructor?.name;
-                
-                if (
-                  constructorName === 'Player' ||
-                  constructorName === 'Queue' ||
-                  constructorName === 'GuildNodeManager'
-                ) {
-                  cleanMeta[key] = `[${constructorName}]`;
-                } else if (value instanceof Error) {
+                if (value instanceof Error) {
                   // Extraire seulement message et stack pour les erreurs
                   cleanMeta[key] = {
                     name: value.name,

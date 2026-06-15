@@ -66,3 +66,9 @@ Redis n'est pas obligatoire. Le bot fonctionne sans, mais le cache ne sera pas d
 
 
 
+
+
+
+
+
+

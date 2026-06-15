@@ -7,6 +7,7 @@ import { Command } from '@/types';
 import { createSuccessEmbed, createErrorEmbed } from '@/utils/embeds';
 import { prisma } from '@/database/client';
 import { logger } from '@/services/LoggerService';
+import { ensureGuildExists } from '@/utils/guild';
 
 /**
  * Calcule l'XP nécessaire pour un niveau
@@ -56,6 +57,9 @@ export default {
     }
 
     try {
+      // S'assurer que le Guild existe
+      await ensureGuildExists(interaction.guild);
+
       // Récupérer ou créer la configuration
       let levelConfig = await prisma.levelConfig.findUnique({
         where: { guildId: interaction.guild.id },
@@ -114,5 +118,11 @@ export default {
     }
   },
 } as Command;
+
+
+
+
+
+
 
 

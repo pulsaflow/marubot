@@ -1,44 +1,39 @@
-import ffmpeg from 'ffmpeg-static';
-process.env.FFMPEG_PATH = ffmpeg as string;
-import { Client, GatewayIntentBits, Partials, REST, Routes } from 'discord.js';
+import { Client, GatewayIntentBits, Partials, REST, Routes } from "discord.js";
+import { config } from "../services/ConfigService";
+import { logger } from "../services/LoggerService";
+import { cache } from "../services/CacheService";
+import { GiveawayService } from "../services/GiveawayService";
+import { MusicManager } from "../music"; // doit pointer vers le NOUVEAU module (export MusicManager)
+import { EventHandler } from "./EventHandler";
+import { CommandRegistry } from "./CommandRegistry";
+import type { Command } from "../types";
 
 // Map globale pour stocker l'instance du bot par client
-// (alternative pour éviter références circulaires dans toJSON())
 const botInstances = new WeakMap<Client, Bot>();
 
-// Fonction utilitaire pour récupérer le bot depuis un client
 export function getBotFromClient(client: Client): Bot | undefined {
   return botInstances.get(client) || (client as any).bot;
 }
-import { config } from '../services/ConfigService';
-import { logger } from '../services/LoggerService';
-import { cache } from '../services/CacheService';
-import { MusicService } from '../services/MusicService';
-import { GiveawayService } from '../services/GiveawayService';
-import { EventHandler } from './EventHandler';
-import { CommandRegistry } from './CommandRegistry';
-import type { Command } from '../types';
 
-/**
- * Classe principale du bot Discord
- */
 export class Bot {
   public readonly client: Client;
   public readonly commands: CommandRegistry;
   public readonly events: EventHandler;
-  public musicService!: MusicService; // Initialisé de manière asynchrone dans start()
-  public giveawayService!: GiveawayService; // Initialisé de manière asynchrone dans start()
+
+  public giveawayService!: GiveawayService;
+  public musicManager!: MusicManager;
+
   private readonly rest: REST;
+  private musicAutoDisconnectInterval: NodeJS.Timeout | null = null;
 
   constructor() {
-    // Création du client Discord
     this.client = new Client({
       intents: [
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMembers,
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.GuildMessageReactions,
-        GatewayIntentBits.GuildVoiceStates,
+        GatewayIntentBits.GuildVoiceStates, // requis pour la musique
         GatewayIntentBits.MessageContent,
         GatewayIntentBits.GuildPresences,
         GatewayIntentBits.GuildEmojisAndStickers,
@@ -51,153 +46,128 @@ export class Bot {
         Partials.GuildMember,
       ],
       allowedMentions: {
-        parse: ['users', 'roles'],
+        parse: ["users", "roles"],
         repliedUser: false,
       },
     });
 
-    // ✅ SOLUTION RADICALE : Désactiver complètement Client.toJSON() pour éviter récursion
-    // Discord.js/discord-player essaie de sérialiser le Client qui contient des références circulaires
-    // En retournant toujours un objet simple, on évite toute sérialisation récursive
-    const originalToJSON = this.client.toJSON.bind(this.client);
-    let toJSONCallCount = 0;
-    
-    this.client.toJSON = function(this: Client) {
-      toJSONCallCount++;
-      
-      // Log uniquement les 3 premiers appels pour diagnostiquer
-      if (toJSONCallCount <= 3) {
-        logger.warn(`[FIX] Client.toJSON() appelé (${toJSONCallCount}) - retour objet simple pour éviter récursion/mémoire`);
-      }
-      
-      // Retourner IMMÉDIATEMENT un objet simple - ne JAMAIS appeler originalToJSON()
-      // car cela déclenche une sérialisation récursive qui consomme toute la mémoire
-      return {
-        id: this.user?.id || 'unknown',
-        username: this.user?.username || 'unknown',
-        _toJSONDisabled: true,
-        _callCount: toJSONCallCount,
-      };
-    };
-
-    // Initialisation du REST API
+    // Init REST
     this.rest = new REST().setToken(config.discordToken);
 
-    // Initialisation des gestionnaires
+    // Handlers
     this.commands = new CommandRegistry();
     this.events = new EventHandler(this.client, this);
-    // MusicService sera initialisé de manière asynchrone dans start()
 
-    // ✅ Utiliser WeakMap pour éviter références circulaires
+    // Bot instance mapping (évite références circulaires sérialisables)
     botInstances.set(this.client, this);
-    
-    // Pour compatibilité avec le code existant, on garde aussi (client as any).bot
-    // mais on le rend non-enumerable pour qu'il ne soit PAS sérialisé par toJSON()
-    Object.defineProperty(this.client, 'bot', {
+
+    // Compat: client.bot non enumerable (OK à garder)
+    Object.defineProperty(this.client, "bot", {
       value: this,
-      enumerable: false, // CRITIQUE : non-enumerable = pas inclus dans toJSON()
+      enumerable: false,
       configurable: true,
       writable: false,
     });
   }
 
-  /**
-   * Initialise et démarre le bot
-   */
   async start(): Promise<void> {
     try {
-      logger.info('Démarrage de MaruBot...');
+      // ✅ init crypto propre (pas de setTimeout random)
+      const { initializeCrypto } = await import("../init");
+      await initializeCrypto();
 
-      // Connexion au cache
-      const cacheEnabled = await cache.isEnabled(); // Initialise la connexion
+      logger.info("Démarrage de MaruBot...");
+
+      // Cache
+      const cacheEnabled = await cache.isEnabled();
       if (!cacheEnabled) {
-        logger.warn('Cache non disponible, utilisation du cache mémoire uniquement');
+        logger.warn("Cache non disponible, utilisation du cache mémoire uniquement");
       }
 
-      // Initialisation du service musique (async avec extracteurs)
-      logger.info('🔄 Initialisation du module musique...');
-      this.musicService = await MusicService.create(this.client);
-      logger.info('✅ Module musique initialisé avec succès');
+      // Giveaways (désactivé temporairement - Prisma DB down)
+      // logger.info("🔄 Initialisation du service giveaways...");
+      // this.giveawayService = new GiveawayService(this.client);
+      // logger.info("✅ Service giveaways initialisé");
 
-      // Initialisation du service giveaways
-      logger.info('🔄 Initialisation du service giveaways...');
-      this.giveawayService = new GiveawayService(this.client);
-      logger.info('✅ Service giveaways initialisé avec succès');
+      // ✅ Musique (NOUVEAU module, from scratch)
+      logger.info("🔄 Initialisation du gestionnaire de musique...");
+      this.musicManager = new MusicManager();
+      logger.info("✅ Gestionnaire de musique initialisé");
 
-      // Chargement des commandes
+      // Auto-disconnect (évite que le bot reste en vocal)
+      this.musicAutoDisconnectInterval = setInterval(() => {
+        try {
+          this.musicManager.tickAutoDisconnect(this.client);
+        } catch (e) {
+          logger.warn("Music auto-disconnect tick error:", e);
+        }
+      }, 20_000);
+
+      // Commands
       await this.commands.loadCommands();
+      logger.info(`Chargement de ${this.commands.getAll().size} commande(s)...`);
+      logger.info("✅ Commandes chargées");
 
-      // Enregistrement des événements
-      this.events.registerBaseEvents();
+      // Events
       await this.events.loadEvents();
 
-      // Déploiement des commandes slash (à faire une seule fois ou via script)
-      // await this.deployCommands();
-
-      // Connexion au Discord
+      // Login
+      logger.info("Connexion au Discord en cours...");
       await this.client.login(config.discordToken);
-      logger.info('Connexion au Discord en cours...');
     } catch (error) {
-      logger.error('Erreur lors du démarrage du bot:', error);
+      logger.error("Erreur lors du démarrage du bot:", error);
       process.exit(1);
     }
   }
 
-  /**
-   * Déploie les commandes slash sur Discord
-   */
   async deployCommands(guildId?: string): Promise<void> {
     try {
-      logger.info('Déploiement des commandes slash...');
+      logger.info("Déploiement des commandes slash...");
 
       const commands = this.commands.getAll().map((command: Command) => {
-        const data =
-          typeof command.data.toJSON === 'function' ? command.data.toJSON() : command.data;
+        const data = typeof command.data.toJSON === "function" ? command.data.toJSON() : command.data;
         return data;
       });
 
       if (guildId) {
-        // Déploiement sur un serveur spécifique (pour tests)
-        await this.rest.put(Routes.applicationGuildCommands(config.discordClientId, guildId), {
-          body: commands,
-        });
+        await this.rest.put(
+          Routes.applicationGuildCommands(config.discordClientId, guildId),
+          { body: commands }
+        );
         logger.info(`${commands.length} commande(s) déployée(s) sur le serveur ${guildId}`);
       } else {
-        // Déploiement global
-        await this.rest.put(Routes.applicationCommands(config.discordClientId), {
-          body: commands,
-        });
+        await this.rest.put(Routes.applicationCommands(config.discordClientId), { body: commands });
         logger.info(`${commands.length} commande(s) déployée(s) globalement`);
       }
     } catch (error) {
-      logger.error('Erreur lors du déploiement des commandes:', error);
+      logger.error("Erreur lors du déploiement des commandes:", error);
       throw error;
     }
   }
 
-  /**
-   * Arrête le bot proprement
-   */
   async stop(): Promise<void> {
-    logger.info('Arrêt de MaruBot...');
+    logger.info("Arrêt de MaruBot...");
 
-    // Arrêt du service giveaways
+    // Stop giveaways
     if (this.giveawayService) {
       this.giveawayService.stop();
     }
 
-    // Fermeture du cache
+    // Stop musique
+    if (this.musicAutoDisconnectInterval) {
+      clearInterval(this.musicAutoDisconnectInterval);
+      this.musicAutoDisconnectInterval = null;
+    }
+
+    // cache
     await cache.close();
 
-    // Déconnexion du client
+    // discord
     void this.client.destroy();
 
-    logger.info('Bot arrêté');
+    logger.info("Bot arrêté");
   }
 
-  /**
-   * Récupère les statistiques du bot
-   */
   getStats() {
     return {
       guilds: this.client.guilds.cache.size,

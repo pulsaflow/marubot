@@ -1,101 +1,73 @@
+/**
+ * Commande /remove - Retire une musique de la queue
+ */
+
 import { SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
-import { Command } from '@/types';
+import type { Command } from '@/types';
+import { getBotFromClient } from '@/core/Bot';
 import { createSuccessEmbed, createErrorEmbed } from '@/utils/embeds';
-import type { Bot } from '@/core/Bot';
-import { isGuildMember } from '@/utils/typeGuards';
 
 export default {
   data: new SlashCommandBuilder()
     .setName('remove')
-    .setDescription("Retire une musique de la file d'attente")
-    .addIntegerOption((option) =>
+    .setDescription('Retire une musique de la file d\'attente')
+    .addIntegerOption(option =>
       option
         .setName('position')
-        .setDescription('Position de la musique à retirer (1 = première en attente)')
-        .setMinValue(1)
+        .setDescription('Position dans la queue (1 = première)')
         .setRequired(true)
+        .setMinValue(1)
     ),
 
   cooldown: 2,
   guildOnly: true,
 
   async execute(interaction: ChatInputCommandInteraction): Promise<void> {
-    await interaction.deferReply();
+    try {
+      if (!interaction.deferred && !interaction.replied) {
+        await interaction.deferReply();
+      }
 
-    const bot = (interaction.client as any).bot as Bot;
-    const musicService = bot.musicService;
+      const bot = getBotFromClient(interaction.client);
+      const session = bot?.musicManager.getSession(interaction.guildId!);
 
-    const queue = musicService.getQueue(interaction.guild!.id);
-
-    if (!queue || !queue.currentTrack) {
-      await interaction.editReply({
-        embeds: [
-          createErrorEmbed({
-            title: '❌ Erreur',
-            description: "Aucune musique n'est actuellement en cours de lecture.",
-            guild: interaction.guild ?? undefined,
-          }),
-        ],
-      });
-      return;
-    }
-
-    const position = interaction.options.getInteger('position', true);
-
-    if (position > queue.tracks.size) {
-      await interaction.editReply({
-        embeds: [
-          createErrorEmbed({
-            title: '❌ Erreur',
-            description: `Position invalide. Il n'y a que ${queue.tracks.size} musique(s) dans la file d'attente.`,
-            guild: interaction.guild ?? undefined,
-          }),
-        ],
-      });
-      return;
-    }
-
-    const member = interaction.member;
-    if (isGuildMember(member)) {
-      const canControl = await musicService.canControlMusic(member, queue);
-      if (!canControl) {
-        await interaction.editReply({
-          embeds: [
-            createErrorEmbed({
-              title: '❌ Permissions insuffisantes',
-              description:
-                "Vous n'avez pas la permission de contrôler la musique. Vous devez avoir le rôle DJ.",
-              guild: interaction.guild ?? undefined,
-            }),
-          ],
+      if (!session || session.queue.length === 0) {
+        const embed = createErrorEmbed({
+          title: '❌ Erreur',
+          description: 'La file d\'attente est vide.',
+          guild: interaction.guild ?? undefined,
         });
+        await interaction.editReply({ embeds: [embed] });
         return;
       }
-    }
 
-    const removedTrack = musicService.remove(queue, position);
+      const position = interaction.options.getInteger('position', true);
 
-    if (!removedTrack) {
-      await interaction.editReply({
-        embeds: [
-          createErrorEmbed({
-            title: '❌ Erreur',
-            description: 'Impossible de retirer cette musique.',
-            guild: interaction.guild ?? undefined,
-          }),
-        ],
-      });
-      return;
-    }
-
-    await interaction.editReply({
-      embeds: [
-        createSuccessEmbed({
-          title: '🗑️ Musique retirée',
-          description: `**${removedTrack.title}** a été retirée de la file d'attente.`,
+      if (position > session.queue.length) {
+        const embed = createErrorEmbed({
+          title: '❌ Erreur',
+          description: `Position invalide. La queue contient ${session.queue.length} piste(s).`,
           guild: interaction.guild ?? undefined,
-        }),
-      ],
-    });
+        });
+        await interaction.editReply({ embeds: [embed] });
+        return;
+      }
+
+      const removed = session.queue.splice(position - 1, 1)[0];
+
+      const embed = createSuccessEmbed({
+        title: '🗑️ Piste retirée',
+        description: `**${removed.title}** a été retirée de la file d'attente.`,
+        guild: interaction.guild ?? undefined,
+      });
+      await interaction.editReply({ embeds: [embed] });
+    } catch (error) {
+      const embed = createErrorEmbed({
+        title: '❌ Erreur',
+        description: 'Une erreur est survenue.',
+        guild: interaction.guild ?? undefined,
+      });
+      await interaction.editReply({ embeds: [embed] });
+    }
   },
 } as Command;

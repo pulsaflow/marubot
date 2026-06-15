@@ -134,3 +134,9 @@ Cela ouvre Prisma Studio dans votre navigateur où vous pouvez voir les tables.
 
 
 
+
+
+
+
+
+

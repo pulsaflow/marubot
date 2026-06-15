@@ -5,40 +5,6 @@ import { logger } from './services/LoggerService';
  * Point d'entrée principal du bot
  */
 async function main(): Promise<void> {
-  // Supprimer les logs console de YouTube.js (warnings du parser, non critiques)
-  const originalConsoleError = console.error;
-  const originalConsoleWarn = console.warn;
-  
-  console.error = (...args: unknown[]) => {
-    const message = args.join(' ');
-    // Ignorer les logs YouTube.js
-    if (
-      message.includes('[YOUTUBEJS]') ||
-      message.includes('InnertubeError') ||
-      message.includes('ListView not found') ||
-      message.includes('ListItemView not found') ||
-      message.includes('GridShelfView not found') ||
-      message.includes('SectionHeaderView not found') ||
-      message.includes('ParsingError') ||
-      message.includes('Unable to find matching run')
-    ) {
-      return; // Ignorer silencieusement
-    }
-    originalConsoleError(...args);
-  };
-  
-  console.warn = (...args: unknown[]) => {
-    const message = args.join(' ');
-    // Ignorer les warnings YouTube.js
-    if (
-      message.includes('[YOUTUBEJS]') ||
-      message.includes('InnertubeError') ||
-      message.includes('uses scraping-based')
-    ) {
-      return; // Ignorer silencieusement
-    }
-    originalConsoleWarn(...args);
-  };
 
   const bot = new Bot();
 
@@ -61,6 +27,16 @@ async function main(): Promise<void> {
     const errorMessage = reason instanceof Error ? reason.message : String(reason);
     const errorString = String(reason);
     
+    // ✅ IGNORER kill EPERM - erreur non critique lors du nettoyage FFmpeg sur Windows
+    if (reason instanceof Error) {
+      const errorCode = (reason as any)?.code;
+      const errorSyscall = (reason as any)?.syscall;
+      if (errorCode === 'EPERM' && errorSyscall === 'kill') {
+        // Ignorer silencieusement - c'est juste un problème de permissions Windows lors du cleanup FFmpeg
+        return;
+      }
+    }
+    
     // Améliorer le logging des erreurs vides ou mal sérialisées
     let errorDetails: unknown = reason;
     if (reason instanceof Error) {
@@ -77,19 +53,11 @@ async function main(): Promise<void> {
       }
     }
 
-    // Ignorer certaines erreurs communes de discord-player et YouTube.js
+    // Ignorer certaines erreurs communes Discord
     if (
       errorMessage.includes('Unknown interaction') ||
       errorMessage.includes('already been acknowledged') ||
-      errorMessage.includes('Could not extract stream') ||
-      errorString.includes('[YOUTUBEJS]') || // Toutes les erreurs YouTube.js (warnings du parser)
-      errorString.includes('InnertubeError') ||
-      errorString.includes('ListView not found') ||
-      errorString.includes('ListItemView not found') ||
-      errorString.includes('GridShelfView not found') ||
-      errorString.includes('SectionHeaderView not found') ||
-      errorString.includes('ParsingError') ||
-      errorMessage.includes('Maximum call stack size exceeded') // On log cette erreur mais on ne crash pas
+      errorMessage.includes('Maximum call stack size exceeded')
     ) {
       // Pour Maximum call stack, logger mais ne pas crasher (essayer de continuer)
       if (errorMessage.includes('Maximum call stack size exceeded')) {
